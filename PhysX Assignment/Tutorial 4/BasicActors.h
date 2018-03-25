@@ -267,7 +267,7 @@ namespace PhysicsEngine
 			//collisions with the scene objects
 			((PxCloth*)actor)->setClothFlag(PxClothFlag::eSCENE_COLLISION, true);
 			 
-		
+			
 
 			colors.push_back(default_color);
 			actor->userData = new UserData(&colors.back(), &mesh_desc);

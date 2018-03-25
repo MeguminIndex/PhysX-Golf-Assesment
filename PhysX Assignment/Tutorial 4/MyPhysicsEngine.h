@@ -4,13 +4,20 @@
 #include <iostream>
 #include <iomanip>
 
+#include<array>
+#include<memory>
+
 namespace PhysicsEngine
 {
 	using namespace std;
 
 	//a list of colours: Circus Palette
-	static const PxVec3 color_palette[] = {PxVec3(46.f/255.f,9.f/255.f,39.f/255.f),PxVec3(217.f/255.f,0.f/255.f,0.f/255.f),
-		PxVec3(255.f/255.f,45.f/255.f,0.f/255.f),PxVec3(255.f/255.f,140.f/255.f,54.f/255.f),PxVec3(4.f/255.f,117.f/255.f,111.f/255.f)};
+	static const PxVec3 color_palette[] = {
+		PxVec3(46.f/255.f,9.f/255.f,39.f/255.f),
+		PxVec3(217.f/255.f,0.f/255.f,0.f/255.f),
+		PxVec3(255.f/255.f,45.f/255.f,0.f/255.f),
+		PxVec3(255.f/255.f,140.f/255.f,54.f/255.f),
+		PxVec3(4.f/255.f,117.f/255.f,111.f/255.f)};
 
 	//pyramid vertices
 	static PxVec3 pyramid_verts[] = { PxVec3(0,1,0), PxVec3(1,0,0), PxVec3(-1,0,0), PxVec3(0,0,1), PxVec3(0,0,-1) };
@@ -35,9 +42,6 @@ namespace PhysicsEngine
 		{
 		}
 	};
-
-
-
 
 	struct FilterGroup
 	{
@@ -124,9 +128,11 @@ namespace PhysicsEngine
 
 		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
 		//enable continous collision detection
-//		pairFlags |= PxPairFlag::eCCD_LINEAR;
-		
-		
+		//pairFlags |= PxPairFlag::eCCD_LINEAR;
+		pairFlags |= PxPairFlag::eDETECT_CCD_CONTACT;
+		pairFlags = PxPairFlag::eSOLVE_CONTACT;
+		pairFlags |= PxPairFlag::eDETECT_DISCRETE_CONTACT;
+
 		//customise collision filtering here
 		//e.g.
 
@@ -263,10 +269,44 @@ namespace PhysicsEngine
 
 
 		Sphere* golfBall;
-		Box* box;
+		Box* ballDirectionObj;
+		PxVec3 directionVisOffset = PxVec3(0.0f,0.0f,0.01f);
+
 		PxQuat rotation;
 		
-		PxReal power = 10.0f;
+		PxReal power = 100.0f;
+
+#pragma region levelVariables
+
+		vector<Box*> boxes;				
+		//Box infomation variables
+			vector<PxVec3> positions = { 
+			PxVec3( 5.0f, 0.3f, 50.0f),
+			PxVec3(-5.0f, 0.3f, 50.0f),
+			PxVec3( 0.0f, 0.3f, 50.0f),
+			PxVec3(0.0f, 1.0f, 60.0f)
+			
+			};
+			vector<PxVec3> dimensions = {
+				PxVec3( 0.2f, 1.0f, 60.0f),
+				PxVec3( 0.2f, 1.0f, 60.0f),
+				PxVec3( 5.0f, 0.2f, 60.0f),
+				PxVec3(5.0f, 0.2f, 3.0f)
+				
+			};
+			vector<PxQuat> mapRotations = {
+				PxQuat(PxIdentity),
+				PxQuat(PxIdentity),
+				PxQuat(PxIdentity),
+				PxQuat(-0.349066,PxVec3(1.0f,0.0f,0.0f))
+
+			};
+
+
+			Cloth* cloth;
+
+#pragma endregion
+
 
 
 	public:
@@ -274,9 +314,9 @@ namespace PhysicsEngine
 
 		//specify your custom filter shader here
 		//PxDefaultSimulationFilterShader by default
-		WBKScene() : Scene() {};
+		WBKScene() : Scene(CustomFilterShader) {};
 
-		///A custom scene class
+		
 		void SetVisualisation()
 		{
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
@@ -287,45 +327,73 @@ namespace PhysicsEngine
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eCLOTH_VERTICAL, 1.0f);
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eCLOTH_BENDING, 1.0f);
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eCLOTH_SHEARING, 1.0f);
+
+
+			//enable Continmuous COllision detection in my scene
+			px_scene->setFlag(PxSceneFlag::eENABLE_CCD,true);
+		
+			//px_scene->setCCDMaxPasses(10);
+		//	px_scene->setFlag(PxSceneDesc::);
+
+
 		}
 
-		//Custom scene initialisation
+		
 		virtual void CustomInit()
 		{
 			SetVisualisation();
+			//GetMaterial()->setStaticFriction(.8f);
+			GetMaterial()->setDynamicFriction(.4f);
+			GetMaterial()->setRestitution(0.2f);
 
-			GetMaterial()->setDynamicFriction(.2f);
-
-			///Initialise and set the customised event callback
+			//Initialise and set the customised event callback
 			my_callback = new MySimulationEventCallback();
 			px_scene->setSimulationEventCallback(my_callback);
 
+			
+			
+
+			//create plane for floor
 			plane = new Plane();
 			plane->Color(PxVec3(210.f / 255.f, 210.f / 255.f, 210.f / 255.f));
 			Add(plane);
 
+			
 
-			golfBall = new Sphere(PxTransform(PxVec3(0.0f, 0.5f,0.0f)),0.2f);
+			//create goldball
+			golfBall = new Sphere(PxTransform(PxVec3(0.0f, 2.5f,0.0f)),0.2f);
 			golfBall->Color(color_palette[0]);
+
+			((PxRigidBody*)golfBall->Get())->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
+
 			Add(golfBall);
 
+			//golfBall->SetupFiltering(FilterGroup::ACTOR0,FilterGroup::ACTOR1);
+
+			//init rotation
 			rotation = PxQuat(1.5708f,PxVec3(1.0f,0.0f,0.0f));
 
-			box = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);			box->SetKinematic(true);
-			box->SetTrigger(true);
-			box->Color(color_palette[0]);
-			Add(box);
+			//create the object used to indicate ball firing direction
+			ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);			ballDirectionObj->SetKinematic(true);
+			ballDirectionObj->SetTrigger(true);
 
+			ballDirectionObj->Color(color_palette[0]);
+			Add(ballDirectionObj);
 
+			//initialise level;
+			InitLevel();
 		}
 
 		//Custom udpate function
 		virtual void CustomUpdate(PxReal dt)
 		{
 
+
+			//update the position of the reticle/direction visual
 			PxTransform pose = ((PxRigidBody*)golfBall->Get())->getGlobalPose();
+			//pose.p += directionVisOffset;
 			pose.q = rotation;
-				((PxRigidBody*)box->Get())->setGlobalPose(pose);
+				((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 			
 		}
 
@@ -353,10 +421,10 @@ namespace PhysicsEngine
 			{
 				case 'Q':
 				{
-					PxTransform pose = ((PxRigidBody*)box->Get())->getGlobalPose();
+					PxTransform pose = ((PxRigidBody*)ballDirectionObj->Get())->getGlobalPose();
 					rotation *= PxQuat(0.1f, PxVec3(0.0f, 0.f, 1.0f));
 					pose.q = rotation;
-					((PxRigidBody*)box->Get())->setGlobalPose(pose);
+					((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 
 					cerr <<"Ball Rotation: " << " X: " + std::to_string(pose.q.x) << " Y: " + std::to_string(pose.q.y) << " Z: " + std::to_string(pose.q.z) << endl;
 
@@ -364,10 +432,10 @@ namespace PhysicsEngine
 				}
 				case 'E':
 				{
-					PxTransform pose = ((PxRigidBody*)box->Get())->getGlobalPose();
+					PxTransform pose = ((PxRigidBody*)ballDirectionObj->Get())->getGlobalPose();
 					rotation *= PxQuat(-0.1f, PxVec3(0.0f, 0.f, 1.0f));
 					pose.q = rotation;
-					((PxRigidBody*)box->Get())->setGlobalPose(pose);
+					((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 
 					cerr << "Ball Rotation: " << " X: " + std::to_string(pose.q.x) << " Y: " + std::to_string(pose.q.y) << " Z: " + std::to_string(pose.q.z) << endl;
 
@@ -377,22 +445,19 @@ namespace PhysicsEngine
 				case 'F':
 				{
 
-					PxVec3 tmp = PxVec3(1.0f, 0.f, 0.0f);
-					PxReal f = 1.0f;
-
-					//cerr << "Ball Direct??: " << " X: " + std::to_string(tmp.x) << " Y: " + std::to_string(tmp.y) << " Z: " + std::to_string(tmp.z) << endl;
-
-
-					rotation.toRadiansAndUnitAxis(f,tmp);
-
+					//PxVec3 tmp = PxVec3(1.0f, 0.f, 0.0f);
+					//PxReal f = 1.0f;		
+					//rotation.toRadiansAndUnitAxis(f,tmp);
 					PxVec3 direction = rotation.getBasisVector1(); //PxVec3(1.0f, 0.f, 0.0f) ;
-
-					
-
 					((PxRigidBody*)golfBall->Get())->addForce(direction*power);
+					cerr << "Ball Direct??: " << " X: " + std::to_string(direction.x) << " Y: " + std::to_string(direction.y) << " Z: " + std::to_string(direction.z) << endl;
 
-					cerr << "Ball Direct??: " << " X: " + std::to_string(tmp.x) << " Y: " + std::to_string(tmp.y) << " Z: " + std::to_string(tmp.z) << endl;
 
+					break;
+				}
+				case 'R':
+				{
+					((PxRigidBody*)golfBall->Get())->setGlobalPose(PxTransform(PxVec3(0.0f,1.5f,0.0f)));
 
 					break;
 				}
@@ -400,5 +465,44 @@ namespace PhysicsEngine
 
 			}
 		}
+
+
+		void InitLevel()
+		{
+			
+
+			int sizeP = positions.size();
+			cerr << "Number of box positions: " << sizeP << endl;
+			for (int i = 0; i < sizeP; i++)
+			{
+				Box* tmpBox;
+				if(i > dimensions.size()-1)
+					tmpBox = new Box(PxTransform(positions[i], mapRotations[i]));
+				else
+				tmpBox = new Box(PxTransform(positions[i], mapRotations[i]), dimensions[i]);
+
+				tmpBox->Color(color_palette[4]);
+				tmpBox->SetKinematic(true);
+				boxes.push_back(tmpBox);
+				Add(boxes[i]);
+
+
+			}
+
+
+			cloth = new Cloth(PxTransform(PxVec3(-5.0f, 11.0f, 80.0f)), PxVec2(10.f, 10.0), 40, 40);
+			cloth->Color(color_palette[2]);
+			((PxCloth*)cloth->Get())->setClothFlag(PxClothFlag::eSWEPT_CONTACT, true);
+
+		//	cloth->SetTrigger(false);
+
+			Add(cloth);
+
+			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eVERTICAL, PxClothStretchConfig(1.0f));
+			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eHORIZONTAL, PxClothStretchConfig(0.9f));
+			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eSHEARING, PxClothStretchConfig(0.75f));
+			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eBENDING, PxClothStretchConfig(0.5f));
+		}
+
 	};
 }
