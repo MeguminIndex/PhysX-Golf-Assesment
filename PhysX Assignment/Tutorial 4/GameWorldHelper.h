@@ -10,11 +10,22 @@ namespace PhysicsEngine
 		
 
 	public:
-		static void ResetPosition(PxRigidBody* rb,PxTransform position)
+
+		GameWorldHelper()
 		{
-			//PxRigidBody* rb = ((PxRigidBody*)pairHeader.actors[0]);
+			cout << "GameWorldConstruct" << endl;
+			lastBallPos = PxVec3(0.0f, 1.0f, 0.0f);
+		};
+
+		PxVec3 lastBallPos; 
+
+		static void ResetPosition(PxRigidBody* rb,PxTransform position)
+		{			
+			
 			rb->setLinearVelocity(PxVec3(0.0f, 0.0f, 0.0f));
 			rb->setGlobalPose(position);
+
+			cout << rb->getName() << "Positition reset X: " << rb->getGlobalPose().p.x <<" Y: " << rb->getGlobalPose().p.y<< " Z: " << rb->getGlobalPose().p.z << endl;
 		};
 
 

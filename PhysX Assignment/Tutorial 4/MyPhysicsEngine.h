@@ -15,13 +15,14 @@ namespace PhysicsEngine
 {
 	using namespace std;
 
+#pragma region PremadesetupStuff
 	//a list of colours: Circus Palette
 	static const PxVec3 color_palette[] = {
-		PxVec3(46.f/255.f,9.f/255.f,39.f/255.f),
-		PxVec3(217.f/255.f,0.f/255.f,0.f/255.f),
-		PxVec3(255.f/255.f,45.f/255.f,0.f/255.f),
-		PxVec3(255.f/255.f,140.f/255.f,54.f/255.f),
-		PxVec3(4.f/255.f,117.f/255.f,111.f/255.f)};
+		PxVec3(46.f / 255.f,9.f / 255.f,39.f / 255.f),
+		PxVec3(217.f / 255.f,0.f / 255.f,0.f / 255.f),
+		PxVec3(255.f / 255.f,45.f / 255.f,0.f / 255.f),
+		PxVec3(255.f / 255.f,140.f / 255.f,54.f / 255.f),
+		PxVec3(4.f / 255.f,117.f / 255.f,111.f / 255.f) };
 
 	//pyramid vertices
 	static PxVec3 pyramid_verts[] = { PxVec3(0,1,0), PxVec3(1,0,0), PxVec3(-1,0,0), PxVec3(0,0,1), PxVec3(0,0,-1) };
@@ -47,6 +48,8 @@ namespace PhysicsEngine
 		}
 	};
 
+#pragma endregion
+
 	struct FilterGroup
 	{
 		enum Enum
@@ -58,14 +61,20 @@ namespace PhysicsEngine
 		};
 	};
 
-	///A customised collision class, implemneting various callbacks
+
+
+	
+
+	
 	class MySimulationEventCallback : public PxSimulationEventCallback
 	{
 	public:
 		//an example variable that will be checked in the main simulation loop
 		bool trigger;
 
-		MySimulationEventCallback() : trigger(false) {}
+		bool resetBallPos;
+
+		MySimulationEventCallback() : trigger(false), resetBallPos(false) {}
 
 		///Method called when the contact with the trigger object is detected.
 		virtual void onTrigger(PxTriggerPair* pairs, PxU32 count) 
@@ -109,7 +118,11 @@ namespace PhysicsEngine
 					{
 						//PxRigidBody* rb = ((PxRigidBody*)pairHeader.actors[0]);
 
-						GameWorldHelper::ResetPosition(((PxRigidBody*)pairHeader.actors[0]),PxTransform(PxVec3(0.0f, 0.7f,0.0f)));
+						resetBallPos = true;
+
+						//GameWorldHelper::ResetPosition(((PxRigidBody*)pairHeader.actors[0]),PxTransform(PxVec3(0.0f, 0.0f, 0.7f)));
+						
+						
 
 					//	rb->setLinearVelocity(PxVec3(0.0f, 0.0f, 0.0f));
 					//	rb->setGlobalPose();
@@ -190,6 +203,8 @@ namespace PhysicsEngine
 
 	class WBKScene : public Scene
 	{
+		
+
 		Plane* plane;		
 		MySimulationEventCallback* my_callback;
 	  //MyCCDEventCallBack* myCCDcallback;
@@ -198,9 +213,9 @@ namespace PhysicsEngine
 		Box* ballDirectionObj;
 		PxVec3 directionVisOffset = PxVec3(0.0f,0.0f,0.01f);
 
-		PxQuat rotation;
-		
-		PxReal power = 100.0f;
+		PxQuat rotation;	//rotation to fire goldball
+		PxReal power = 100.0f;//force to hit golfball with
+		//PxVec3 lastBallPos = PxVec3(0.0f,0.0f,0.7f);
 
 #pragma region levelVariables
 
@@ -236,7 +251,7 @@ namespace PhysicsEngine
 
 
 	public:
-		
+		GameWorldHelper gameWorldH;
 
 		//specify your custom filter shader here
 		//PxDefaultSimulationFilterShader by default
@@ -247,7 +262,9 @@ namespace PhysicsEngine
 		{
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-
+			px_scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES,1.0f);
+			px_scene->setVisualizationParameter(PxVisualizationParameter::eBODY_LIN_VELOCITY, 1.0f);
+			
 			//cloth visualisation
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eCLOTH_HORIZONTAL, 1.0f);
 			px_scene->setVisualizationParameter(PxVisualizationParameter::eCLOTH_VERTICAL, 1.0f);
@@ -266,17 +283,17 @@ namespace PhysicsEngine
 		virtual void CustomInit()
 		{
 			SetVisualisation();
-			//GetMaterial()->setStaticFriction(.8f);
-			GetMaterial()->setDynamicFriction(.4f);
+			//GetMaterial()->setStaticFriction(1.54f);
+			GetMaterial()->setDynamicFriction(.2f);
 			GetMaterial()->setRestitution(0.2f);
-
+		//	GetMaterial()->setFrictionCombineMode(PxCombineMode::e);
 			//Initialise and set the customised event callback
 			my_callback = new MySimulationEventCallback();
 			px_scene->setSimulationEventCallback(my_callback);
 			//myCCDcallback = new MyCCDEventCallBack();
 			//px_scene->setCCDContactModifyCallback(myCCDcallback);
 
-			
+		//	gameWorldH = GameWorldHelper();
 		
 			
 			
@@ -295,7 +312,8 @@ namespace PhysicsEngine
 			golfBall->Color(color_palette[0]);
 			golfBall->Name("GolfBall");
 			((PxRigidBody*)golfBall->Get())->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
-			
+			((PxRigidBody*)golfBall->Get())->isRigidDynamic()->setAngularDamping(.8f);
+
 			Add(golfBall);
 			golfBall->SetupFiltering(FilterGroup::GOLFBALL,FilterGroup::GROUND);
 
@@ -305,11 +323,11 @@ namespace PhysicsEngine
 			rotation = PxQuat(1.5708f,PxVec3(1.0f,0.0f,0.0f));
 
 			//create the object used to indicate ball firing direction
-			ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);			ballDirectionObj->SetKinematic(true);
+			ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);
+			ballDirectionObj->SetKinematic(true);
 			ballDirectionObj->SetTrigger(true);
-
 			ballDirectionObj->Color(color_palette[0]);
-		
+			//Add(ballDirectionObj);
 
 
 
@@ -323,12 +341,40 @@ namespace PhysicsEngine
 		{
 
 
+			PxRigidBody* golfBallRB = (PxRigidBody*)golfBall->Get();
+
+
 			//update the position of the reticle/direction visual
-			PxTransform pose = ((PxRigidBody*)golfBall->Get())->getGlobalPose();
+			PxTransform pose = golfBallRB->getGlobalPose();
 			//pose.p += directionVisOffset;
 			pose.q = rotation;
 				((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 			
+
+				if (my_callback->resetBallPos)
+				{
+					cout << "Reset Ball position" << endl;
+
+					GameWorldHelper::ResetPosition(golfBallRB, PxTransform(gameWorldH.lastBallPos));
+					my_callback->resetBallPos = false;
+
+				}
+
+			//	cout << "Golfball vel Mag: " << golfBallRB->getLinearVelocity().magnitude() << endl;
+				if (golfBallRB->getLinearVelocity().magnitude() < 0.6f)
+					golfBallRB->setAngularVelocity(PxVec3(0.0f, 0.0f, 0.0f));//hacky way to solve infinate roll problem 
+
+
+				if (golfBallRB->isRigidDynamic()->isSleeping())
+				{
+			//		cout << "Update Golfballs Last Position" << endl;
+					gameWorldH.lastBallPos = (golfBallRB->getGlobalPose()).p;
+				}
+
+
+		//		cout << "GolfBALL Vel:: X:" << golfBallRB->getLinearVelocity().x <<" Y: " <<
+		//			golfBallRB->getLinearVelocity().y<< " Z: " << golfBallRB->getLinearVelocity().z << endl;
+
 		}
 
 		/// An example use of key release handling
@@ -391,8 +437,8 @@ namespace PhysicsEngine
 				}
 				case 'R':
 				{
-					((PxRigidBody*)golfBall->Get())->setGlobalPose(PxTransform(PxVec3(0.0f,1.5f,0.0f)));
-
+					//((PxRigidBody*)golfBall->Get())->setGlobalPose(PxTransform(PxVec3(0.0f,1.5f,0.0f)));
+					GameWorldHelper::ResetPosition((PxRigidBody*)golfBall->Get(), PxTransform(gameWorldH.lastBallPos));
 					break;
 				}
 
