@@ -19,6 +19,12 @@
     <Filter Include="Source Files\Extras">
       <UniqueIdentifier>{164e283a-9191-4a4e-9f86-ce68e31030d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\WKRB_GameClasses">
+      <UniqueIdentifier>{7382f90d-0496-4264-a02d-4bbbca70b432}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WKRB_GameClasses">
+      <UniqueIdentifier>{2051d68c-a2b8-411d-8c78-f31727c9bf41}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicActors.h">
@@ -53,6 +59,9 @@
     </ClInclude>
     <ClInclude Include="Extras\UserData.h">
       <Filter>Header Files\Extras</Filter>
+    </ClInclude>
+    <ClInclude Include="GameWorldHelper.h">
+      <Filter>Header Files\WKRB_GameClasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
