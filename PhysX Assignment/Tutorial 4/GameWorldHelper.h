@@ -29,6 +29,12 @@ namespace PhysicsEngine
 		};
 
 
+		static void PrintVector(PxVec3 vector)
+		{
+			cout << "X : "<<vector.x<<" Y :" << vector.y <<" Z :" <<vector.z << endl;
+
+		}
+
 	private:
 
 

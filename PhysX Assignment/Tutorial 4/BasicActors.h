@@ -355,4 +355,37 @@ namespace PhysicsEngine
 
 	};
 
+	class CompoundHole : public DynamicActor
+	{
+	public:
+		CompoundHole(const PxTransform& pose = PxTransform(PxIdentity), PxVec3 dimensions = PxVec3(5.0f, 0.4f, 5.0f)
+			, PxVec3 holeSize = PxVec3(0.5f, 0.4f, 0.5f), PxReal density = 1.f) :DynamicActor(pose)
+		{
+
+		//	PxReal shapeThickness = 0.1f;
+
+			PxVec3 newDimX = dimensions - holeSize;
+
+			//
+			CreateShape(PxBoxGeometry(PxVec3(holeSize.x, holeSize.y, holeSize.y)), density);//bottom
+
+			CreateShape(PxBoxGeometry(PxVec3(newDimX.x, dimensions.y, newDimX.z / 2)), density);//Left
+			CreateShape(PxBoxGeometry(PxVec3(newDimX.x, dimensions.y, newDimX.z / 2)), density);//Right
+			CreateShape(PxBoxGeometry(PxVec3(newDimX.x / 2, dimensions.y, newDimX.z )), density);//Front
+			CreateShape(PxBoxGeometry(PxVec3(newDimX.x / 2, dimensions.y, newDimX.z )), density);//Back
+
+			PxQuat rotation = PxQuat(1.5708f, PxVec3(0.0f, 1.f, 0.0f));
+
+
+			GetShape(0)->setLocalPose(PxTransform(PxVec3(.0f, -holeSize.y, .0f)));
+			GetShape(1)->setLocalPose(PxTransform(PxVec3((newDimX.x/2) + holeSize.x, .0f, .0f), rotation));
+			GetShape(2)->setLocalPose(PxTransform(PxVec3(-(newDimX.x / 2) - holeSize.x, .0f, .0f), rotation));
+			GetShape(3)->setLocalPose(PxTransform(PxVec3(.0f, .0f, (newDimX.z/2) +  holeSize.z), rotation));
+			GetShape(4)->setLocalPose(PxTransform(PxVec3(.0f, .0f, -(newDimX.z/2) - holeSize.z), rotation));
+
+		}
+
+
+	};
+
 }

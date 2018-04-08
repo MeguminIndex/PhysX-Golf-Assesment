@@ -61,7 +61,7 @@ namespace VisualDebugger
 		Renderer::InitWindow(window_name, width, height);
 		Renderer::Init();
 
-		camera = new Camera(PxVec3(0.0f, 5.0f, 15.0f), PxVec3(0.f,-.1f,-1.f), 5.f);
+		camera = new Camera(PxVec3(0.0f, 5.0f, 15.0f), PxVec3(0.f,-.1f,-1.f), 15.f);
 
 		//initialise HUD
 		HUDInit();
@@ -107,8 +107,13 @@ namespace VisualDebugger
 		hud.AddLine(HELP, "    mouse + click - change orientation");
 		hud.AddLine(HELP, "    F8 - reset view");
 		hud.AddLine(HELP, "");
-		hud.AddLine(HELP, " Force (applied to the selected actor)");
-		hud.AddLine(HELP, "    I,K,J,L,U,M - forward,backward,left,right,up,down");
+		hud.AddLine(HELP, "Golf Controlls");
+		hud.AddLine(HELP, "Hit Ball - F");
+		hud.AddLine(HELP, "Change Balls rotartin - Q,E");
+		hud.AddLine(HELP, "Increase/Decrease Balls Power - G,H ");
+		hud.AddLine(HELP, "Reset Ball to last stroke position - R");
+		//hud.AddLine(HELP, " Force (applied to the selected actor)");
+		//hud.AddLine(HELP, "    I,K,J,L,U,M - forward,backward,left,right,up,down");
 		//add a pause screen
 		hud.AddLine(PAUSE, "");
 		hud.AddLine(PAUSE, "");
@@ -191,6 +196,8 @@ namespace VisualDebugger
 	//handle camera control keys
 	void CameraInput(int key)
 	{
+
+
 		switch (toupper(key))
 		{
 		case 'W':

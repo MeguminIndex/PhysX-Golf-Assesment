@@ -56,7 +56,7 @@ namespace PhysicsEngine
 		{
 			GOLFBALL	= (1 << 0),
 			GROUND		= (1 << 1),
-			ACTOR2		= (1 << 2)
+			GOLFHOLE	= (1 << 2)
 			//add more if you need
 		};
 	};
@@ -214,28 +214,37 @@ namespace PhysicsEngine
 		PxVec3 directionVisOffset = PxVec3(0.0f,0.0f,0.01f);
 
 		PxQuat rotation;	//rotation to fire goldball
+
+		PxReal minPower = 10.0f;
+		PxReal maxPower = 150.0f;;
+		PxReal powerIncVal = 10.0f;
 		PxReal power = 100.0f;//force to hit golfball with
 		//PxVec3 lastBallPos = PxVec3(0.0f,0.0f,0.7f);
+
+	
 
 #pragma region levelVariables
 
 		vector<Box*> boxes;				
 		//Box infomation variables
-			vector<PxVec3> positions = { 
-			PxVec3( 5.0f, 0.3f, 50.0f),
-			PxVec3(-5.0f, 0.3f, 50.0f),
-			PxVec3( 0.0f, 0.3f, 50.0f),
+			vector<PxVec3> positions = {
+			PxVec3( 0.0f, 0.3f,-10.0f),
+			PxVec3( 5.0f, 0.3f, 100.0f),
+			PxVec3(-5.0f, 0.3f, 100.0f),
+			PxVec3( 0.0f, 0.3f, 100.0f),
 			PxVec3(0.0f, 1.0f, 60.0f)
 			
 			};
 			vector<PxVec3> dimensions = {
-				PxVec3( 0.2f, 1.0f, 60.0f),
-				PxVec3( 0.2f, 1.0f, 60.0f),
-				PxVec3( 5.0f, 0.2f, 60.0f),
+				PxVec3( 5.0f, 1.0f, 0.2f),
+				PxVec3( 0.2f, 1.0f, 110.0f),
+				PxVec3( 0.2f, 1.0f, 110.0f),
+				PxVec3( 5.0f, 0.2f, 110.0f),
 				PxVec3(5.0f, 0.2f, 3.0f)
 				
 			};
 			vector<PxQuat> mapRotations = {
+				PxQuat(PxIdentity),
 				PxQuat(PxIdentity),
 				PxQuat(PxIdentity),
 				PxQuat(PxIdentity),
@@ -245,6 +254,10 @@ namespace PhysicsEngine
 
 
 			Cloth* cloth;
+
+			CompoundHole* hole1;
+
+			PyramidStatic* pyramidObsitcle;
 
 #pragma endregion
 
@@ -315,7 +328,7 @@ namespace PhysicsEngine
 			((PxRigidBody*)golfBall->Get())->isRigidDynamic()->setAngularDamping(.8f);
 
 			Add(golfBall);
-			golfBall->SetupFiltering(FilterGroup::GOLFBALL,FilterGroup::GROUND);
+			golfBall->SetupFiltering(FilterGroup::GOLFBALL,FilterGroup::GROUND | FilterGroup::GOLFHOLE);
 
 			
 
@@ -326,8 +339,9 @@ namespace PhysicsEngine
 			ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);
 			ballDirectionObj->SetKinematic(true);
 			ballDirectionObj->SetTrigger(true);
+			
 			ballDirectionObj->Color(color_palette[0]);
-			//Add(ballDirectionObj);
+			Add(ballDirectionObj);
 
 
 
@@ -360,20 +374,40 @@ namespace PhysicsEngine
 
 				}
 
-			//	cout << "Golfball vel Mag: " << golfBallRB->getLinearVelocity().magnitude() << endl;
+		
+
 				if (golfBallRB->getLinearVelocity().magnitude() < 0.6f)
-					golfBallRB->setAngularVelocity(PxVec3(0.0f, 0.0f, 0.0f));//hacky way to solve infinate roll problem 
-
-
-				if (golfBallRB->isRigidDynamic()->isSleeping())
 				{
-			//		cout << "Update Golfballs Last Position" << endl;
-					gameWorldH.lastBallPos = (golfBallRB->getGlobalPose()).p;
+					golfBallRB->setAngularVelocity(PxVec3(0.0f, 0.0f, 0.0f));//hacky way to solve infinate roll problem 
+					//golfBallRB->setLinearVelocity(PxVec3(0.0f,0.0f,0.0f));
+
+					
+
+
 				}
 
 
+				//wcout << "GolfBall Lin Vel:" << endl;
+				//GameWorldHelper::PrintVector(golfBallRB->getAngularVelocity());
+				
+
+				if(golfBallRB->getAngularVelocity().isZero())
+				{
+				//	cout << "Update Golfballs Last Position" << endl;
+					gameWorldH.lastBallPos = (golfBallRB->getGlobalPose()).p;
+				}
+
+			/*	if (golfBallRB->isRigidDynamic()->isSleeping())
+				{
+					cout << "Update Golfballs Last Position" << endl;
+					gameWorldH.lastBallPos = (golfBallRB->getGlobalPose()).p;
+				}*/
 		//		cout << "GolfBALL Vel:: X:" << golfBallRB->getLinearVelocity().x <<" Y: " <<
 		//			golfBallRB->getLinearVelocity().y<< " Z: " << golfBallRB->getLinearVelocity().z << endl;
+
+
+
+			
 
 		}
 
@@ -406,7 +440,7 @@ namespace PhysicsEngine
 					pose.q = rotation;
 					((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 
-					cerr <<"Ball Rotation: " << " X: " + std::to_string(pose.q.x) << " Y: " + std::to_string(pose.q.y) << " Z: " + std::to_string(pose.q.z) << endl;
+					//cerr <<"Ball Rotation: " << " X: " + std::to_string(pose.q.x) << " Y: " + std::to_string(pose.q.y) << " Z: " + std::to_string(pose.q.z) << endl;
 
 					break;
 				}
@@ -417,7 +451,7 @@ namespace PhysicsEngine
 					pose.q = rotation;
 					((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 
-					cerr << "Ball Rotation: " << " X: " + std::to_string(pose.q.x) << " Y: " + std::to_string(pose.q.y) << " Z: " + std::to_string(pose.q.z) << endl;
+				//	cerr << "Ball Rotation: " << " X: " + std::to_string(pose.q.x) << " Y: " + std::to_string(pose.q.y) << " Z: " + std::to_string(pose.q.z) << endl;
 
 					break;
 				}
@@ -442,6 +476,23 @@ namespace PhysicsEngine
 					break;
 				}
 
+				case 'G':
+				{
+					cout << "Hitting Power incrimented to:  " << power << endl;
+					power += powerIncVal;
+					if (power > maxPower)
+						power = maxPower;
+
+					break;
+				}
+				case 'H':
+				{
+					cout << "Hitting Power incrimented to:  " << power << endl;
+					power -= powerIncVal;
+					if (power < minPower)
+						power = minPower;
+					break;
+				}
 
 			}
 		}
@@ -470,6 +521,9 @@ namespace PhysicsEngine
 			}
 
 
+			pyramidObsitcle = new PyramidStatic(PxTransform(0.0f, 0.4f, 3.0f));
+			Add(pyramidObsitcle);
+
 			cloth = new Cloth(PxTransform(PxVec3(-5.0f, 11.0f, 80.0f)), PxVec2(10.f, 10.0), 40, 40);
 			cloth->Color(color_palette[2]);
 			((PxCloth*)cloth->Get())->setClothFlag(PxClothFlag::eSWEPT_CONTACT, true);
@@ -482,6 +536,16 @@ namespace PhysicsEngine
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eHORIZONTAL, PxClothStretchConfig(0.9f));
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eSHEARING, PxClothStretchConfig(0.75f));
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eBENDING, PxClothStretchConfig(0.5f));
+
+
+			hole1 = new CompoundHole(PxTransform(PxVec3(0.0f,0.1f,214.0f)));
+			hole1->SetKinematic(true);
+			hole1->Color(color_palette[4]);
+
+			hole1->SetupFiltering(FilterGroup::GOLFHOLE,FilterGroup::GOLFBALL,0);//set the filtering so when the golfball hits shape 0 (the floor of the hole object) we get a collision event;
+			hole1->Name("Hole1");
+			Add(hole1);
+
 		}
 
 	};

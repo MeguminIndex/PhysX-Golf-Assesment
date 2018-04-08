@@ -1,14 +1,9 @@
 ﻿  Tutorial 4.cpp
 g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\basicactors.h(344): warning C4305: 'argument': truncation from 'double' to 'physx::PxReal'
-g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\myphysicsengine.h(242): warning C4305: 'argument': truncation from 'double' to 'physx::PxReal'
-g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\myphysicsengine.h(454): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\myphysicsengine.h(251): warning C4305: 'argument': truncation from 'double' to 'physx::PxReal'
+g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\myphysicsengine.h(505): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   Generating Code...
-  Compiling...
+  Skipping... (no relevant changes detected)
   VisualDebugger.cpp
-g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\basicactors.h(344): warning C4305: 'argument': truncation from 'double' to 'physx::PxReal'
-g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\myphysicsengine.h(242): warning C4305: 'argument': truncation from 'double' to 'physx::PxReal'
-g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\myphysicsengine.h(454): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-g:\documents\github\physx-golf-assesment\physx assignment\tutorial 4\visualdebugger.cpp(250): warning C4060: switch statement contains no 'case' or 'default' labels
-  Generating Code...
   Tutorial 4.vcxproj -> G:\Documents\GitHub\PhysX-Golf-Assesment\PhysX Assignment\x64\Debug\Tutorial 4.exe
   Tutorial 4.vcxproj -> G:\Documents\GitHub\PhysX-Golf-Assesment\PhysX Assignment\x64\Debug\Tutorial 4.pdb (Partial PDB)
