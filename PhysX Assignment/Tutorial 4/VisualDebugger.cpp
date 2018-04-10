@@ -38,6 +38,9 @@ namespace VisualDebugger
 
 	///simulation objects
 	Camera* camera;
+	PxVec3 cameraOffset = PxVec3(0.0f,5.0f ,-6.0f);
+	bool followcam = false;
+
 	PhysicsEngine::WBKScene* scene;
 	PxReal delta_time = 1.f/60.f;
 	PxReal gForceStrength = 20;
@@ -62,6 +65,8 @@ namespace VisualDebugger
 		Renderer::Init();
 
 		camera = new Camera(PxVec3(0.0f, 5.0f, 15.0f), PxVec3(0.f,-.1f,-1.f), 15.f);
+
+		
 
 		//initialise HUD
 		HUDInit();
@@ -105,6 +110,7 @@ namespace VisualDebugger
 		hud.AddLine(HELP, " Camera");
 		hud.AddLine(HELP, "    W,S,A,D,X,Z - forward,backward,left,right,up,down");
 		hud.AddLine(HELP, "    mouse + click - change orientation");
+		hud.AddLine(HELP, "    C - Toggle Follow Cam");
 		hud.AddLine(HELP, "    F8 - reset view");
 		hud.AddLine(HELP, "");
 		hud.AddLine(HELP, "Golf Controlls");
@@ -171,6 +177,12 @@ namespace VisualDebugger
 		//finish rendering
 		Renderer::Finish();
 
+		if (followcam == true)
+		{
+
+			PxRigidBody* golfBallRB = (PxRigidBody*)scene->golfBall->Get();			
+			camera->setEye(golfBallRB->getGlobalPose().p + cameraOffset);
+		}
 		//perform a single simulation step
 		scene->Update(delta_time);
 	}
@@ -178,6 +190,16 @@ namespace VisualDebugger
 	//user defined keyboard handlers
 	void UserKeyPress(int key)
 	{
+
+		switch (toupper(key))
+		{
+		case 'C':
+			followcam = !followcam;
+			break;
+
+		default:
+			break;
+		}
 		
 			scene->ExampleKeyPressHandler(key);
 		
@@ -201,23 +223,44 @@ namespace VisualDebugger
 		switch (toupper(key))
 		{
 		case 'W':
-			camera->MoveForward(delta_time);
+			
+			if (followcam == true)
+				cameraOffset.z += 0.1f;
+			else
+				camera->MoveForward(delta_time);
+
 			break;
 		case 'S':
-			camera->MoveBackward(delta_time);
+			
+			if (followcam == true)
+			cameraOffset.z -= 0.1f;
+			else
+				camera->MoveBackward(delta_time);
 			break;
 		case 'A':
-			camera->MoveLeft(delta_time);
+
+			if (followcam == true)
+			cameraOffset.x += 0.1f;
+			else
+				camera->MoveLeft(delta_time);
+			
 			break;
 		case 'D':
-			camera->MoveRight(delta_time);
+			if (followcam == true)
+			cameraOffset.x -= 0.1f;
+			else
+				camera->MoveRight(delta_time);
 			break;
 		case 'X':
+			if (followcam == false)
 			camera->MoveUp(delta_time);
 			break;
 		case 'Z':
+			if (followcam == false)
 			camera->MoveDown(delta_time);
 			break;
+	
+
 		default:
 			break;
 		}

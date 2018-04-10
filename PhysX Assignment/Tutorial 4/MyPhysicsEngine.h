@@ -72,8 +72,8 @@ namespace PhysicsEngine
 		//an example variable that will be checked in the main simulation loop
 		bool trigger;
 
-		bool resetBallPos;
-		bool golfBallInHole;
+		bool resetBallPos =false;
+		bool golfBallInHole = false;
 
 
 		MySimulationEventCallback() : trigger(false), resetBallPos(false) {}
@@ -118,7 +118,8 @@ namespace PhysicsEngine
 
 					if (strcmp(pairHeader.actors[0]->getName(), "GolfBall") == 0 && (strcmp(pairHeader.actors[1]->getName(), "Ground") == 0))
 						resetBallPos = true;
-					if (strcmp(pairHeader.actors[0]->getName(), "GolfBall") == 0 && (strcmp(pairHeader.actors[1]->getName(), "Hole1") == 0))
+
+					if (strcmp(pairHeader.actors[0]->getName(), "Hole1") == 0 && (strcmp(pairHeader.actors[1]->getName(), "GolfBall") == 0))
 						golfBallInHole = true;
 
 
@@ -201,7 +202,7 @@ namespace PhysicsEngine
 		MySimulationEventCallback* my_callback;
 	  //MyCCDEventCallBack* myCCDcallback;
 
-		Sphere* golfBall;
+		
 		Box* ballDirectionObj;
 		PxVec3 directionVisOffset = PxVec3(0.0f,0.0f,0.01f);
 
@@ -264,6 +265,8 @@ namespace PhysicsEngine
 
 
 	public:
+		Sphere* golfBall;
+
 		GameWorldHelper gameWorldH;
 
 		//specify your custom filter shader here
@@ -358,11 +361,7 @@ namespace PhysicsEngine
 			PxRigidBody* golfBallRB = (PxRigidBody*)golfBall->Get();
 
 
-			//update the position of the reticle/direction visual
-			PxTransform pose = golfBallRB->getGlobalPose();
-			//pose.p += directionVisOffset;
-			pose.q = rotation;
-				((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
+			
 			
 
 				if (my_callback->resetBallPos)
@@ -402,11 +401,26 @@ namespace PhysicsEngine
 				if (my_callback->golfBallInHole)
 				{
 					cout << "Golf Ball is in the Hole!" << endl;
+					cout << "Player took " << gameWorldH.player1Strokes << " strokes to finish the hole" << endl;
+
+					cout << "Reseting  Player" << endl;
+
+					gameWorldH = GameWorldHelper();
+
+					GameWorldHelper::ResetPosition(golfBallRB, PxTransform(gameWorldH.lastBallPos));
 
 					my_callback->golfBallInHole = false;
 				}
 
 
+
+
+
+				//update the position of the reticle/direction visual
+				PxTransform pose = golfBallRB->getGlobalPose();
+				//pose.p += directionVisOffset;
+				pose.q = rotation;
+				((PxRigidBody*)ballDirectionObj->Get())->setGlobalPose(pose);
 
 		}
 
@@ -458,12 +472,16 @@ namespace PhysicsEngine
 				case 'F':
 				{
 
-					PxVec3 direction = rotation.getBasisVector1();
-					((PxRigidBody*)golfBall->Get())->addForce(direction*power);
-					cerr << "Ball Direct??: " << " X: " + std::to_string(direction.x) << " Y: " + std::to_string(direction.y) << " Z: " + std::to_string(direction.z) << endl;
+					if (((PxRigidBody*)golfBall->Get())->getLinearVelocity().magnitude() < 0.6f)
+					{
 
-					gameWorldH.player1Strokes += 1;
-					cout << "Number of Strokes: " << gameWorldH.player1Strokes << endl;
+						PxVec3 direction = rotation.getBasisVector1();
+						((PxRigidBody*)golfBall->Get())->addForce(direction*power);
+						cerr << "Ball Direct??: " << " X: " + std::to_string(direction.x) << " Y: " + std::to_string(direction.y) << " Z: " + std::to_string(direction.z) << endl;
+
+						gameWorldH.player1Strokes += 1;
+						cout << "Number of Strokes: " << gameWorldH.player1Strokes << endl;
+					}
 					break;
 				}
 				case 'R':
@@ -535,7 +553,7 @@ namespace PhysicsEngine
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eBENDING, PxClothStretchConfig(0.5f));
 
 			//WINDMILL
-			windMill = new CompoundWindMill(PxTransform(0.0f,6.5f,140.0f, PxQuat(3.14159f, PxVec3(0.0f, 1.0f, 0.0f))));
+			windMill = new CompoundWindMill(PxTransform(0.0f,6.1f,140.0f, PxQuat(3.14159f, PxVec3(0.0f, 1.0f, 0.0f))));
 			windMill->SetKinematic(true);
 
 			//WINDMILL BLADES

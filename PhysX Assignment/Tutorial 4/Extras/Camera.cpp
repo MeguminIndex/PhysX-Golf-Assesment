@@ -43,6 +43,14 @@ namespace VisualDebugger
 		return eye; 
 	}
 
+	void Camera::setEye(PxVec3 pos)
+	{
+		eye = pos;
+
+	}
+
+	
+
 	PxVec3 Camera::getDir() const 
 	{ 
 		return dir; 
