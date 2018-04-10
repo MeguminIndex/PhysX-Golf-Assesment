@@ -17,7 +17,8 @@ namespace PhysicsEngine
 			lastBallPos = PxVec3(0.0f, 1.0f, 0.0f);
 		};
 
-		PxVec3 lastBallPos; 
+		PxVec3 lastBallPos;
+		int player1Strokes = 0;
 
 		static void ResetPosition(PxRigidBody* rb,PxTransform position)
 		{			

@@ -73,6 +73,8 @@ namespace PhysicsEngine
 		bool trigger;
 
 		bool resetBallPos;
+		bool golfBallInHole;
+
 
 		MySimulationEventCallback() : trigger(false), resetBallPos(false) {}
 
@@ -115,19 +117,9 @@ namespace PhysicsEngine
 					cerr << "onContact::eNOTIFY_TOUCH_FOUND" << endl;
 
 					if (strcmp(pairHeader.actors[0]->getName(), "GolfBall") == 0 && (strcmp(pairHeader.actors[1]->getName(), "Ground") == 0))
-					{
-						//PxRigidBody* rb = ((PxRigidBody*)pairHeader.actors[0]);
-
 						resetBallPos = true;
-
-						//GameWorldHelper::ResetPosition(((PxRigidBody*)pairHeader.actors[0]),PxTransform(PxVec3(0.0f, 0.0f, 0.7f)));
-						
-						
-
-					//	rb->setLinearVelocity(PxVec3(0.0f, 0.0f, 0.0f));
-					//	rb->setGlobalPose();
-
-					}
+					if (strcmp(pairHeader.actors[0]->getName(), "GolfBall") == 0 && (strcmp(pairHeader.actors[1]->getName(), "Hole1") == 0))
+						golfBallInHole = true;
 
 
 					
@@ -256,6 +248,14 @@ namespace PhysicsEngine
 			Cloth* cloth;
 
 			CompoundHole* hole1;
+			
+			//WINDMILL
+			CompoundWindMill* windMill;
+			RevoluteJoint* jointRevBladeOne;
+			RevoluteJoint* jointRevBladeTwo;
+			Box* bladeOne;
+			Box* bladeTwo;
+			//END WINDMILL
 
 			PyramidStatic* pyramidObsitcle;
 
@@ -374,22 +374,14 @@ namespace PhysicsEngine
 
 				}
 
-		
-
 				if (golfBallRB->getLinearVelocity().magnitude() < 0.6f)
 				{
 					golfBallRB->setAngularVelocity(PxVec3(0.0f, 0.0f, 0.0f));//hacky way to solve infinate roll problem 
 					//golfBallRB->setLinearVelocity(PxVec3(0.0f,0.0f,0.0f));
-
-					
-
-
 				}
-
 
 				//wcout << "GolfBall Lin Vel:" << endl;
 				//GameWorldHelper::PrintVector(golfBallRB->getAngularVelocity());
-				
 
 				if(golfBallRB->getAngularVelocity().isZero())
 				{
@@ -407,7 +399,14 @@ namespace PhysicsEngine
 
 
 
-			
+				if (my_callback->golfBallInHole)
+				{
+					cout << "Golf Ball is in the Hole!" << endl;
+
+					my_callback->golfBallInHole = false;
+				}
+
+
 
 		}
 
@@ -459,14 +458,12 @@ namespace PhysicsEngine
 				case 'F':
 				{
 
-					//PxVec3 tmp = PxVec3(1.0f, 0.f, 0.0f);
-					//PxReal f = 1.0f;		
-					//rotation.toRadiansAndUnitAxis(f,tmp);
-					PxVec3 direction = rotation.getBasisVector1(); //PxVec3(1.0f, 0.f, 0.0f) ;
+					PxVec3 direction = rotation.getBasisVector1();
 					((PxRigidBody*)golfBall->Get())->addForce(direction*power);
 					cerr << "Ball Direct??: " << " X: " + std::to_string(direction.x) << " Y: " + std::to_string(direction.y) << " Z: " + std::to_string(direction.z) << endl;
 
-
+					gameWorldH.player1Strokes += 1;
+					cout << "Number of Strokes: " << gameWorldH.player1Strokes << endl;
 					break;
 				}
 				case 'R':
@@ -537,6 +534,36 @@ namespace PhysicsEngine
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eSHEARING, PxClothStretchConfig(0.75f));
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eBENDING, PxClothStretchConfig(0.5f));
 
+			//WINDMILL
+			windMill = new CompoundWindMill(PxTransform(0.0f,6.5f,140.0f, PxQuat(3.14159f, PxVec3(0.0f, 1.0f, 0.0f))));
+			windMill->SetKinematic(true);
+
+			//WINDMILL BLADES
+
+		
+			PxTransform windMillTrans = ((PxRigidBody*)windMill->Get())->getGlobalPose();
+			windMillTrans.p.z += 2.0f;
+			windMillTrans.p.y += 5.0f;
+
+			PxVec3 bladesDim = PxVec3(0.1f, 10.f, 1.1f);
+
+			bladeOne = new Box(windMillTrans, bladesDim);
+			
+			PxQuat rot = windMillTrans.q;
+			windMillTrans.q *= PxQuat(1.5708f, PxVec3(0.0f, 0.0f, 1.0f));
+			((PxRigidBody*)bladeOne->Get())->setGlobalPose(windMillTrans);
+
+
+			//propella JOINTS
+			jointRevBladeOne = new RevoluteJoint(windMill, PxTransform(PxVec3(0.f, 5.f, 4.f), PxQuat(PxPi / 2, PxVec3(0.f, 1.f, 0.f))), bladeOne, PxTransform(PxVec3(0.f, 0.f, 0.f)));
+			
+
+			jointRevBladeOne->DriveVelocity(10.0f);
+		
+
+			Add(windMill);
+			Add(bladeOne);
+			
 
 			hole1 = new CompoundHole(PxTransform(PxVec3(0.0f,0.1f,214.0f)));
 			hole1->SetKinematic(true);

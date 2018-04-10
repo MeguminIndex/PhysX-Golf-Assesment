@@ -359,7 +359,7 @@ namespace PhysicsEngine
 	{
 	public:
 		CompoundHole(const PxTransform& pose = PxTransform(PxIdentity), PxVec3 dimensions = PxVec3(5.0f, 0.4f, 5.0f)
-			, PxVec3 holeSize = PxVec3(0.5f, 0.4f, 0.5f), PxReal density = 1.f) :DynamicActor(pose)
+			, PxVec3 holeSize = PxVec3(0.5f, 0.4f, 0.5f), PxReal density = 1.f) : DynamicActor(pose)
 		{
 
 		//	PxReal shapeThickness = 0.1f;
@@ -382,6 +382,66 @@ namespace PhysicsEngine
 			GetShape(2)->setLocalPose(PxTransform(PxVec3(-(newDimX.x / 2) - holeSize.x, .0f, .0f), rotation));
 			GetShape(3)->setLocalPose(PxTransform(PxVec3(.0f, .0f, (newDimX.z/2) +  holeSize.z), rotation));
 			GetShape(4)->setLocalPose(PxTransform(PxVec3(.0f, .0f, -(newDimX.z/2) - holeSize.z), rotation));
+
+		}
+
+
+	};
+
+	class CompoundWindMill : public DynamicActor
+	{
+	public:
+
+		//RevoluteJoint* jointRevBladeOne;
+		//RevoluteJoint* jointRevBladeTwo;
+		//
+		//Box* bladeOne;
+		//Box* bladeTwo;
+
+
+		CompoundWindMill(const PxTransform& pose = PxTransform(PxIdentity), PxVec3 bodyDimensions = PxVec3(2.0f,5.0f,2.0f),
+			PxVec3 bladeDimensions = PxVec3(1.0f, 10.0f, 0.1f), PxVec3 legDimensions = PxVec3(0.2f,0.5f,0.2f), PxReal density = 1.0f) : DynamicActor(pose)
+		{
+
+			//Create Main Body
+			CreateShape(PxBoxGeometry(bodyDimensions),density);
+
+			//CreateFeet
+			CreateShape(PxBoxGeometry(legDimensions), density);
+			CreateShape(PxBoxGeometry(legDimensions), density);
+			CreateShape(PxBoxGeometry(legDimensions), density);
+			CreateShape(PxBoxGeometry(legDimensions), density);
+
+
+			//Create PropellaBlades
+			//CreateShape(PxBoxGeometry(bladeDimensions), density);
+			//CreateShape(PxBoxGeometry(bladeDimensions), density);
+			//CreateShape(PxBoxGeometry(bladeDimensions), density);
+			//CreateShape(PxBoxGeometry(bladeDimensions), density);
+
+			//bladeOne = new Box(PxTransform(PxVec3(0.0f,0.0f,0.0f), PxQuat(1.5708f, PxVec3(0.0f, 0.0f, 1.0f))));
+			//bladeTwo = new Box(PxTransform(PxIdentity));
+			//bladeOne->SetKinematic(true);
+			//bladeTwo->SetKinematic(true);
+			
+
+			//Set Positions
+			//set legs
+			GetShape(1)->setLocalPose(PxTransform(PxVec3(-(bodyDimensions.x / 2), -(bodyDimensions.y), (bodyDimensions.z / 2))));
+			GetShape(2)->setLocalPose(PxTransform(PxVec3(-(bodyDimensions.x / 2), -(bodyDimensions.y), -(bodyDimensions.z / 2))));
+			GetShape(3)->setLocalPose(PxTransform(PxVec3((bodyDimensions.x / 2), -(bodyDimensions.y), (bodyDimensions.z / 2))));
+			GetShape(4)->setLocalPose(PxTransform(PxVec3((bodyDimensions.x / 2), -(bodyDimensions.y), -(bodyDimensions.z / 2))));
+
+			//set propella position
+		//	GetShape(5)->setLocalPose(PxTransform(PxVec3(0.0f, (bodyDimensions.y /2) , bodyDimensions.z), PxQuat(1.5708f,PxVec3(0.0f,0.0f,1.0f)) ));
+		//	GetShape(6)->setLocalPose(PxTransform(PxVec3(0.0f, (bodyDimensions.y /2), bodyDimensions.z)));
+		//	GetShape(7)->setLocalPose(PxTransform(PxVec3((bodyDimensions.x), (bodyDimensions.y / 2), bodyDimensions.z )));
+		//	GetShape(8)->setLocalPose(PxTransform(PxVec3((bodyDimensions.x), (bodyDimensions.y / 2), bodyDimensions.z )));
+
+			//jointRevBladeOne = new RevoluteJoint(nullptr, PxTransform(PxVec3(0.f,10.f,0.f),PxQuat(PxPi/2,PxVec3(0.f,1.f,0.f))), bladeOne, PxTransform(PxVec3(0.f,5.f,0.f)));
+			
+			//jointRevBladeTwo = new RevoluteJoint(nullptr, PxTransform(PxVec3(0.f, 10.f, 0.f), PxQuat(PxPi / 2, PxVec3(0.f, 1.f, 0.f))), bladeTwo, PxTransform(PxVec3(0.f, 9.f, 0.f)));
+
 
 		}
 
