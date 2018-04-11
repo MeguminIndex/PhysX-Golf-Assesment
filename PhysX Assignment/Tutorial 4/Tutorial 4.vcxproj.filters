@@ -63,6 +63,9 @@
     <ClInclude Include="GameWorldHelper.h">
       <Filter>Header Files\WKRB_GameClasses</Filter>
     </ClInclude>
+    <ClInclude Include="MovingObject.h">
+      <Filter>Header Files\WKRB_GameClasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhysicsEngine.cpp">

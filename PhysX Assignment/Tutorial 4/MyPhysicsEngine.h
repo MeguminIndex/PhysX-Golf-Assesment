@@ -9,7 +9,7 @@
 
 
 #include "GameWorldHelper.h"
-
+#include "MovingObject.h"
 
 namespace PhysicsEngine
 {
@@ -72,7 +72,7 @@ namespace PhysicsEngine
 		//an example variable that will be checked in the main simulation loop
 		bool trigger;
 
-		bool resetBallPos =false;
+		bool resetBallPos = false;
 		bool golfBallInHole = false;
 
 
@@ -214,7 +214,7 @@ namespace PhysicsEngine
 		PxReal power = 100.0f;//force to hit golfball with
 		//PxVec3 lastBallPos = PxVec3(0.0f,0.0f,0.7f);
 
-	
+		bool printToggle = true;
 
 #pragma region levelVariables
 
@@ -251,14 +251,19 @@ namespace PhysicsEngine
 			CompoundHole* hole1;
 			
 			//WINDMILL
-			CompoundWindMill* windMill;
-			RevoluteJoint* jointRevBladeOne;
-			RevoluteJoint* jointRevBladeTwo;
-			Box* bladeOne;
-			Box* bladeTwo;
+			vector<CompoundWindMill*> windMill;
+			vector<RevoluteJoint*> jointRevBladeOne;	
+			vector<Box*> bladeOne;
+			
+
+
 			//END WINDMILL
 
 			PyramidStatic* pyramidObsitcle;
+
+			
+
+			MovingObject moveObj;
 
 #pragma endregion
 
@@ -299,7 +304,7 @@ namespace PhysicsEngine
 		virtual void CustomInit()
 		{
 			SetVisualisation();
-			//GetMaterial()->setStaticFriction(1.54f);
+			GetMaterial()->setStaticFriction(0.38f);
 			GetMaterial()->setDynamicFriction(.2f);
 			GetMaterial()->setRestitution(0.2f);
 		//	GetMaterial()->setFrictionCombineMode(PxCombineMode::e);
@@ -326,6 +331,11 @@ namespace PhysicsEngine
 			//create goldball
 			golfBall = new Sphere(PxTransform(PxVec3(0.0f, 5.5f,0.0f)),0.2f);
 			golfBall->Color(color_palette[0]);
+
+			
+			golfBall->Material(CreateMaterial(0.55f, 0.4f, 0.78f));//try to mimic a golf ball friction and resitution
+
+
 			golfBall->Name("GolfBall");
 			((PxRigidBody*)golfBall->Get())->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
 			((PxRigidBody*)golfBall->Get())->isRigidDynamic()->setAngularDamping(.8f);
@@ -337,7 +347,7 @@ namespace PhysicsEngine
 
 			//init rotation
 			rotation = PxQuat(1.5708f,PxVec3(1.0f,0.0f,0.0f));
-
+			rotation *= PxQuat(1.74533f, PxVec3(0.0f, 0.f, 1.0f));
 			//create the object used to indicate ball firing direction
 			ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);
 			ballDirectionObj->SetKinematic(true);
@@ -356,13 +366,11 @@ namespace PhysicsEngine
 		//Custom udpate function
 		virtual void CustomUpdate(PxReal dt)
 		{
+			moveObj.Update(dt);
 
 
 			PxRigidBody* golfBallRB = (PxRigidBody*)golfBall->Get();
-
-
-			
-			
+				
 
 				if (my_callback->resetBallPos)
 				{
@@ -374,9 +382,11 @@ namespace PhysicsEngine
 				}
 
 				if (golfBallRB->getLinearVelocity().magnitude() < 0.6f)
-				{
+				{				
+
 					golfBallRB->setAngularVelocity(PxVec3(0.0f, 0.0f, 0.0f));//hacky way to solve infinate roll problem 
 					//golfBallRB->setLinearVelocity(PxVec3(0.0f,0.0f,0.0f));
+	
 				}
 
 				//wcout << "GolfBall Lin Vel:" << endl;
@@ -386,6 +396,13 @@ namespace PhysicsEngine
 				{
 				//	cout << "Update Golfballs Last Position" << endl;
 					gameWorldH.lastBallPos = (golfBallRB->getGlobalPose()).p;
+
+					/*if (printToggle)
+					{
+						cout << "GolfBall Position :" << endl;
+						GameWorldHelper::PrintVector(golfBallRB->getGlobalPose().p);
+						
+					}*/
 				}
 
 			/*	if (golfBallRB->isRigidDynamic()->isSleeping())
@@ -398,7 +415,7 @@ namespace PhysicsEngine
 
 
 
-				if (my_callback->golfBallInHole)
+				if (my_callback->golfBallInHole )
 				{
 					cout << "Golf Ball is in the Hole!" << endl;
 					cout << "Player took " << gameWorldH.player1Strokes << " strokes to finish the hole" << endl;
@@ -481,6 +498,9 @@ namespace PhysicsEngine
 
 						gameWorldH.player1Strokes += 1;
 						cout << "Number of Strokes: " << gameWorldH.player1Strokes << endl;
+
+
+						printToggle = true;
 					}
 					break;
 				}
@@ -515,20 +535,21 @@ namespace PhysicsEngine
 
 		void InitLevel()
 		{
-			
+
 
 			int sizeP = positions.size();
 			cerr << "Number of box positions: " << sizeP << endl;
 			for (int i = 0; i < sizeP; i++)
 			{
 				Box* tmpBox;
-				if(i > dimensions.size()-1)
+				if (i > dimensions.size() - 1)
 					tmpBox = new Box(PxTransform(positions[i], mapRotations[i]));
 				else
-				tmpBox = new Box(PxTransform(positions[i], mapRotations[i]), dimensions[i]);
+					tmpBox = new Box(PxTransform(positions[i], mapRotations[i]), dimensions[i]);
 
 				tmpBox->Color(color_palette[4]);
 				tmpBox->SetKinematic(true);
+
 				boxes.push_back(tmpBox);
 				Add(boxes[i]);
 
@@ -536,14 +557,14 @@ namespace PhysicsEngine
 			}
 
 
-			pyramidObsitcle = new PyramidStatic(PxTransform(0.0f, 0.4f, 3.0f));
+			pyramidObsitcle = new PyramidStatic(PxTransform(0.0f, 0.4f, 6.0f));
 			Add(pyramidObsitcle);
 
 			cloth = new Cloth(PxTransform(PxVec3(-5.0f, 11.0f, 80.0f)), PxVec2(10.f, 10.0), 40, 40);
 			cloth->Color(color_palette[2]);
 			((PxCloth*)cloth->Get())->setClothFlag(PxClothFlag::eSWEPT_CONTACT, true);
 
-		//	cloth->SetTrigger(false);
+			//	cloth->SetTrigger(false);
 
 			Add(cloth);
 
@@ -553,35 +574,61 @@ namespace PhysicsEngine
 			((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eBENDING, PxClothStretchConfig(0.5f));
 
 			//WINDMILL
-			windMill = new CompoundWindMill(PxTransform(0.0f,6.1f,140.0f, PxQuat(3.14159f, PxVec3(0.0f, 1.0f, 0.0f))));
-			windMill->SetKinematic(true);
 
-			//WINDMILL BLADES
+			PxReal xOffset = 5.0f;
+			PxReal zOffset = 5.0f;
 
+			int num = 1;
+			
+			windMill.resize(num);
+			bladeOne.resize(num);
+			jointRevBladeOne.resize(num);
+
+
+			for (int i = 0; i < num; i++)
+			{
+
+
+				windMill[i] = new CompoundWindMill(PxTransform(0.0f + (xOffset*i), 6.1f, 140.0f, PxQuat(3.14159f, PxVec3(0.0f, 1.0f, 0.0f))));
+				windMill[i]->SetKinematic(true);
+
+				//WINDMILL BLADES
+
+
+				PxTransform windMillTrans = ((PxRigidBody*)windMill[i]->Get())->getGlobalPose();
+				windMillTrans.p.z += 2.0f;
+				windMillTrans.p.y += 5.0f;
+
+				PxVec3 bladesDim = PxVec3(0.1f, 10.f, 1.1f);
+
+				bladeOne[i] = new Box(windMillTrans, bladesDim);
+
+				PxQuat rot = windMillTrans.q;
+				windMillTrans.q *= PxQuat(1.5708f, PxVec3(0.0f, 0.0f, 1.0f));
+				((PxRigidBody*)bladeOne[i]->Get())->setGlobalPose(windMillTrans);
+
+
+
+
+
+				Add(windMill[i]);
+				Add(bladeOne[i]);
+
+
+				//propella JOINTS
+				jointRevBladeOne[i] = new RevoluteJoint(windMill[i], PxTransform(PxVec3(0.f, 5.f, 4.f), PxQuat(PxPi / 2, PxVec3(0.f, 1.f, 0.f))), bladeOne[i], PxTransform(PxVec3(0.f, 0.f, 0.f)));
+				jointRevBladeOne[i]->DriveVelocity(10.0f);
+			}
 		
-			PxTransform windMillTrans = ((PxRigidBody*)windMill->Get())->getGlobalPose();
-			windMillTrans.p.z += 2.0f;
-			windMillTrans.p.y += 5.0f;
 
-			PxVec3 bladesDim = PxVec3(0.1f, 10.f, 1.1f);
+			/*movingBox = new Box();
+			movingBox->SetKinematic(true);
+			movingBox->Name("MovingBox01");*/
 
-			bladeOne = new Box(windMillTrans, bladesDim);
-			
-			PxQuat rot = windMillTrans.q;
-			windMillTrans.q *= PxQuat(1.5708f, PxVec3(0.0f, 0.0f, 1.0f));
-			((PxRigidBody*)bladeOne->Get())->setGlobalPose(windMillTrans);
+			moveObj = MovingObject(PxTransform(PxVec3(0.0f, 0.3f, 80.0f)));
 
+			Add(moveObj.movingObj);
 
-			//propella JOINTS
-			jointRevBladeOne = new RevoluteJoint(windMill, PxTransform(PxVec3(0.f, 5.f, 4.f), PxQuat(PxPi / 2, PxVec3(0.f, 1.f, 0.f))), bladeOne, PxTransform(PxVec3(0.f, 0.f, 0.f)));
-			
-
-			jointRevBladeOne->DriveVelocity(10.0f);
-		
-
-			Add(windMill);
-			Add(bladeOne);
-			
 
 			hole1 = new CompoundHole(PxTransform(PxVec3(0.0f,0.1f,214.0f)));
 			hole1->SetKinematic(true);

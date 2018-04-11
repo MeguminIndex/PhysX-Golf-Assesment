@@ -7,7 +7,7 @@ int main()
 {
 	try 
 	{ 
-		VisualDebugger::Init("Tutorial 4", 800, 800); 
+		VisualDebugger::Init("WKRB PhysX Golf", 800, 800); 
 	}
 	catch (Exception exc) 
 	{ 

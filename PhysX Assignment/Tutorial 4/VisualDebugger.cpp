@@ -4,9 +4,12 @@
 #include "Extras\Renderer.h"
 #include "Extras\HUD.h"
 
+
 namespace VisualDebugger
 {
 	using namespace physx;
+
+
 
 	enum RenderMode
 	{
@@ -43,6 +46,7 @@ namespace VisualDebugger
 
 	PhysicsEngine::WBKScene* scene;
 	PxReal delta_time = 1.f/60.f;
+	PxReal oldDelta;
 	PxReal gForceStrength = 20;
 	RenderMode render_mode = NORMAL;
 	const int MAX_KEYS = 256;
@@ -74,6 +78,7 @@ namespace VisualDebugger
 		///Assign callbacks
 		//render
 		glutDisplayFunc(RenderScene);
+	
 
 		//keyboard
 		glutKeyboardFunc(KeyPress);
@@ -89,6 +94,7 @@ namespace VisualDebugger
 
 		//init motion callback
 		motionCallback(0,0);
+
 	}
 
 	void HUDInit()
@@ -141,6 +147,11 @@ namespace VisualDebugger
 	//Render the scene and perform a single simulation step
 	void RenderScene()
 	{
+		
+	/*	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
+		delta_time = timeSinceStart - oldDelta;
+		oldDelta = timeSinceStart;*/
+
 		//handle pressed keys
 		KeyHold();
 
@@ -185,6 +196,7 @@ namespace VisualDebugger
 		}
 		//perform a single simulation step
 		scene->Update(delta_time);
+		
 	}
 
 	//user defined keyboard handlers
