@@ -90,13 +90,13 @@ namespace PhysicsEngine
 					//check if eNOTIFY_TOUCH_FOUND trigger
 					if (pairs[i].status & PxPairFlag::eNOTIFY_TOUCH_FOUND)
 					{
-						cerr << "onTrigger::eNOTIFY_TOUCH_FOUND" << endl;
+						//cerr << "onTrigger::eNOTIFY_TOUCH_FOUND" << endl;
 						trigger = true;
 					}
 					//check if eNOTIFY_TOUCH_LOST trigger
 					if (pairs[i].status & PxPairFlag::eNOTIFY_TOUCH_LOST)
 					{
-						cerr << "onTrigger::eNOTIFY_TOUCH_LOST" << endl;
+						//cerr << "onTrigger::eNOTIFY_TOUCH_LOST" << endl;
 						trigger = false;
 					}
 				}
@@ -114,7 +114,7 @@ namespace PhysicsEngine
 				//check eNOTIFY_TOUCH_FOUND
 				if (pairs[i].events & PxPairFlag::eNOTIFY_TOUCH_FOUND)
 				{
-					cerr << "onContact::eNOTIFY_TOUCH_FOUND" << endl;
+				//	cerr << "onContact::eNOTIFY_TOUCH_FOUND" << endl;
 
 					if (strcmp(pairHeader.actors[0]->getName(), "GolfBall") == 0 && (strcmp(pairHeader.actors[1]->getName(), "Ground") == 0))
 						resetBallPos = true;
@@ -128,7 +128,7 @@ namespace PhysicsEngine
 				//check eNOTIFY_TOUCH_LOST
 				if (pairs[i].events & PxPairFlag::eNOTIFY_TOUCH_LOST)
 				{
-					cerr << "onContact::eNOTIFY_TOUCH_LOST" << endl;
+				//	cerr << "onContact::eNOTIFY_TOUCH_LOST" << endl;
 				}
 			}
 		}
@@ -203,15 +203,17 @@ namespace PhysicsEngine
 	  //MyCCDEventCallBack* myCCDcallback;
 
 		
-		Box* ballDirectionObj;
+		//Box* ballDirectionObj;
 		PxVec3 directionVisOffset = PxVec3(0.0f,0.0f,0.01f);
+
+		CompoundArrow* ballDirectionObj;
 
 		PxQuat rotation;	//rotation to fire goldball
 
 		PxReal minPower = 10.0f;
 		PxReal maxPower = 150.0f;;
-		PxReal powerIncVal = 10.0f;
-		PxReal power = 100.0f;//force to hit golfball with
+		PxReal powerIncVal = 5.0f;
+		PxReal power = 60.0f;//force to hit golfball with
 		//PxVec3 lastBallPos = PxVec3(0.0f,0.0f,0.7f);
 
 		bool printToggle = true;
@@ -349,14 +351,20 @@ namespace PhysicsEngine
 			rotation = PxQuat(1.5708f,PxVec3(1.0f,0.0f,0.0f));
 			rotation *= PxQuat(1.74533f, PxVec3(0.0f, 0.f, 1.0f));
 			//create the object used to indicate ball firing direction
-			ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);
+
+			/*ballDirectionObj = new Box(PxTransform(PxVec3(0.0f, 0.5f, 0.0f)),PxVec3(0.05f, 1.05f, 0.05f),0.01f);
 			ballDirectionObj->SetKinematic(true);
 			ballDirectionObj->SetTrigger(true);
 			
 			ballDirectionObj->Color(color_palette[0]);
+			Add(ballDirectionObj);*/
+
+
+			ballDirectionObj = new CompoundArrow(PxTransform(PxVec3(2.0f,3.0f,0.0f)));
+			ballDirectionObj->SetKinematic(true);
+			ballDirectionObj->SetTrigger(true);
+			ballDirectionObj->Color(color_palette[0]);
 			Add(ballDirectionObj);
-
-
 
 
 			//initialise level;
@@ -512,21 +520,21 @@ namespace PhysicsEngine
 				}
 
 				case 'G':
-				{
-					cout << "Hitting Power incrimented to:  " << power << endl;
+				{		
 					power += powerIncVal;
 					if (power > maxPower)
 						power = maxPower;
-
+					cout << "Hitting Power incrimented to:  " << power << endl;
 					break;
 				}
 				case 'H':
-				{
-					cout << "Hitting Power incrimented to:  " << power << endl;
+				{	
 					power -= powerIncVal;
 					if (power < minPower)
 						power = minPower;
+					cout << "Hitting Power incrimented to:  " << power << endl;
 					break;
+
 				}
 
 			}
@@ -560,7 +568,7 @@ namespace PhysicsEngine
 			pyramidObsitcle = new PyramidStatic(PxTransform(0.0f, 0.4f, 6.0f));
 			Add(pyramidObsitcle);
 
-			cloth = new Cloth(PxTransform(PxVec3(-5.0f, 11.0f, 80.0f)), PxVec2(10.f, 10.0), 40, 40);
+			cloth = new Cloth(PxTransform(PxVec3(-5.0f, 11.0f, 60.0f)), PxVec2(10.f, 10.0), 40, 40);
 			cloth->Color(color_palette[2]);
 			((PxCloth*)cloth->Get())->setClothFlag(PxClothFlag::eSWEPT_CONTACT, true);
 
@@ -601,7 +609,7 @@ namespace PhysicsEngine
 
 				PxVec3 bladesDim = PxVec3(0.1f, 10.f, 1.1f);
 
-				bladeOne[i] = new Box(windMillTrans, bladesDim);
+				bladeOne[i] = new Box(windMillTrans, bladesDim,2.0f);
 
 				PxQuat rot = windMillTrans.q;
 				windMillTrans.q *= PxQuat(1.5708f, PxVec3(0.0f, 0.0f, 1.0f));
@@ -625,7 +633,7 @@ namespace PhysicsEngine
 			movingBox->SetKinematic(true);
 			movingBox->Name("MovingBox01");*/
 
-			moveObj = MovingObject(PxTransform(PxVec3(0.0f, 0.3f, 80.0f)));
+			moveObj = MovingObject(PxTransform(PxVec3(0.0f, 0.3f, 40.0f)));
 
 			Add(moveObj.movingObj);
 
@@ -633,6 +641,7 @@ namespace PhysicsEngine
 			hole1 = new CompoundHole(PxTransform(PxVec3(0.0f,0.1f,214.0f)));
 			hole1->SetKinematic(true);
 			hole1->Color(color_palette[4]);
+			hole1->Material(CreateMaterial(0.7f, 0.6f, 0.04f));
 
 			hole1->SetupFiltering(FilterGroup::GOLFHOLE,FilterGroup::GOLFBALL,0);//set the filtering so when the golfball hits shape 0 (the floor of the hole object) we get a collision event;
 			hole1->Name("Hole1");

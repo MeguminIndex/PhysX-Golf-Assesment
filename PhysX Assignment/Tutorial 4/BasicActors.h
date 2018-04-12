@@ -400,7 +400,7 @@ namespace PhysicsEngine
 
 
 		CompoundWindMill(const PxTransform& pose = PxTransform(PxIdentity), PxVec3 bodyDimensions = PxVec3(2.0f,5.0f,2.0f),
-			PxVec3 bladeDimensions = PxVec3(1.0f, 10.0f, 0.1f), PxVec3 legDimensions = PxVec3(0.2f,0.5f,0.2f), PxReal density = 1.0f) : DynamicActor(pose)
+		 PxVec3 legDimensions = PxVec3(0.2f,0.5f,0.2f), PxReal density = 1.0f) : DynamicActor(pose)
 		{
 
 			//Create Main Body
@@ -448,4 +448,30 @@ namespace PhysicsEngine
 
 	};
 
+
+	class CompoundArrow : public  DynamicActor
+	{
+	public:
+		CompoundArrow(const PxTransform& pose = PxTransform(PxIdentity), PxVec3 dimensions = PxVec3(0.05f, 1.05f, 0.05f), PxReal density = 1.0f) : DynamicActor(pose)
+		{
+			//Line of Arrow
+			CreateShape(PxBoxGeometry(dimensions),density);
+			//Arrow Head
+			PxVec3 arrowDim = dimensions;
+			arrowDim.y = 0.2f;
+			arrowDim.x += 0.1f;
+			arrowDim.z += 0.1f;
+			CreateShape(PxBoxGeometry(arrowDim),density);
+
+			PxVec3 arrowpos = PxVec3(0.0f, dimensions.y, 0.0f);
+
+			GetShape(1)->setLocalPose(PxTransform(arrowpos));
+
+
+
+
+		};
+
+
+	};
 }
